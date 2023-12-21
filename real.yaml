@@ -1,35 +1,40 @@
 
-#todo testare script stingere in timpul aprinderii
-#calibrare finala pid
-#implementat eroare presiune apa si presiune aer in timpul mersului
+
 #dalasuri pe tur, retur si evacuare afara
 #limitare  putere ventilator la temperaturi prea mari, pentru prestingere, posibil sa mearga sigma-delta de data asta.
 #decide cu ce porneste, termostat clasic wireless, wifi, senzor temp fir prin aproprierea centralei
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
 #entitate climate
-#apoi ecranul.
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "75" < min_ignition_water_temp: "55"
 
-
 substitutions:
-  wait_for_ignition_time: "15min"
+  wait_for_preignition_time: "10min"  # will pause dosing after mentioned time until temperature starts rising
+  wait_for_ignition_time: "15min" # total time until ignition should occur
+  ignition_delta_to_confirmed: "30"
   maximum_wait_for_stabilization_time: "10min"
   minimum_run_of_stabilization_time: "1min" #keep stabilization running once met exhaust condition
-  ignition_delta_to_confirmed: "30"
+
   auger_percent_on_ignition: "15"
   auger_percent_on_stabilization: "35"
-  auger_percent_on_normal_run: "45" #todo dinamic 25min, max? #15 minim absolut/potrivit pentru un calorifer,cam scoate fum la 15??? 20 minim rezonabil
-  auger_prefill_time: "25s"
-  exhaust_absolute_max_temp: "200"
+  auger_percent_on_normal_run: "45" #45 max, 15 min
+  auger_prefill_time: "30s"
+  
   #fan_percent: "100"
   extinguished_temp: "50"
   minimum_extinguish_time: "5min"
-  fully_ignited_temp: "100"   #175 ads1115 necalibrat bine dar fiabil
-  max_water_temp: "75"
-  min_ignition_water_temp: "50" #maye make it dependant of water_temp_heating_pump_to_be_fully_on?
-  water_temp_heating_pump_to_be_fully_on: "65" #recommended max_water_temp - 10
+  fully_ignited_temp: "100"   #175 ads1115 necalibrat dar fiabil
+  
+  min_ignition_water_temp: "50" #maybe make it dependant of water_temp_heating_pump_to_be_fully_on?
+  water_temp_heating_pump_to_be_fully_on: "80" #This the stove water target temp, main thermostat.
 
+  max_water_pressure: "2250" #hPa, 1bar=1000hPa
+  min_water_pressure: "500"
 
+  exhaust_absolute_max_temp: "200"
+  max_water_temp: "90" #should be at least water_temp_heating_pump_to_be_fully_on + 10 so auger modulation can properly occur
+ 
+  pellet_kwh_per_kg: "4.8" #float
+  auger_fully_on_grams_per_second: "1.7336284202" #float
 
 
 debug:
@@ -43,15 +48,17 @@ esphome:
   name: esp32s2-8
   friendly_name: esp32s2-8
   on_boot:
-    - priority: 600
+   # - priority: 600
       then:
         - switch.turn_on: exhaust_fan_switch
-    - priority: 200 #200
-      then:
-        - script.execute: booting_script
-    - priority: -100
-      then:
+   # - priority: 200 #200
+     # then:
+        - delay: 5s
         - button.press: rttl_boot
+        - script.execute: booting_script
+    #- priority: -100
+    #  then:
+        
       
     
 
@@ -62,39 +69,36 @@ esp32:
     type: arduino
 
 logger:
-  level: error
-  #logs:
-  #  sensor: warn
-  #  ads1115: warn
-  #  dallas.sensor: error
-  #  component: error
-  #  max31855: error
-  #  climate: info
+  level: debug
+  logs:
+    sensor: warn
+    ads1115: warn
+    dallas.sensor: error
+    component: error
+    max31855: warn
+    climate: info
+    number: warn
 
 api:
+  encryption:
+    key: !secret stove_api_key
 
 ota:
+  password: stove_ota_password
 
 wifi:
+  reboot_timeout: 0s
   networks:
-    - ssid: !secret wifi_ssid
-      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_5
+      password: !secret wifi_password_5
       manual_ip:
         static_ip: 192.168.0.49
         gateway: 192.168.0.1
         subnet: 255.255.255.0
         dns1: 1.1.1.1
-        dns2: 8.8.8.8
+        dns2: 8.8.8.8 
 
-    - ssid: Hotspot
-      password: temporarypassword
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Esp32S2-8 Fallback Hotspot"
-    password: ""
-
-captive_portal:
+mdns:
 
 spi:
   - id: spi1
@@ -122,28 +126,28 @@ sensor:
     name: Uptime Sensor
     update_interval: 5s
           
-  - platform: rotary_encoder
-    name: "Rotary Encoder"
-    min_value: 7
-    max_value: 80
-    id: rotary
-    resolution: 2
-    pin_a:
-        number: 12
-        inverted: true
-        mode:
-          input: true
-          pullup: true
-    pin_b:
-        number: 36
-        inverted: true
-        mode: 
-          input: true
-          pullup: true
-    on_clockwise:
-      - number.increment: water_temp_heating_pump_to_be_fully_on
-    on_anticlockwise:
-      - number.decrement:  water_temp_heating_pump_to_be_fully_on
+ #- platform: rotary_encoder
+ #  name: "Rotary Encoder"
+ #  min_value: 7
+ #  max_value: 80
+ #  id: rotary
+ #  resolution: 2
+ #  pin_a:
+ #      number: 12
+ #      inverted: true
+ #      mode:
+ #        input: true
+ #        pullup: true
+ #  pin_b:
+ #      number: 36
+ #      inverted: true
+ #      mode: 
+ #        input: true
+ #        pullup: true
+ #  on_clockwise:
+ #    - number.increment: water_temp_heating_pump_to_be_fully_on
+ #  on_anticlockwise:
+ #    - number.decrement:  water_temp_heating_pump_to_be_fully_on
           
 
   - platform: dallas
@@ -182,7 +186,7 @@ sensor:
     update_interval: 1s
     id: exhaust_temp
     filters: 
-       - skip_initial: 30 #max 60s or timeout error
+       - skip_initial: 30 #max 59s or timeout error
        - max
 
   - platform: ads1115
@@ -194,6 +198,7 @@ sensor:
     name: "voltaj senzor presiune"
     id: a0_gnd
     update_interval: 5s
+    #1.62900 v 1230hpa
 
   - platform: ads1115
    # conector ntc port 1 dreapta sus sub expander
@@ -252,7 +257,7 @@ sensor:
         #       - 0.0034531250   -> 300 
         #- multiply: 0.75
     on_value_range:
-      - above: 2500 #todo substiturions
+      - above: ${max_water_pressure}
         then:
           - lambda: id(water_pressure_good).publish_state(false);
           - text_sensor.template.publish:
@@ -265,7 +270,7 @@ sensor:
                                   id: stove_status
                                   state: "Abnormal water pressure (too high)"
 
-      - below: 500 #todo substiturions
+      - below: ${min_water_pressure}
         then:
           - lambda: id(water_pressure_good).publish_state(false);
           - text_sensor.template.publish:
@@ -280,7 +285,7 @@ sensor:
       
 
   - platform: template
-    name: "auger_modulation"
+    name: "auger_dozer_modulation"
     id: auger_modulation_status
     state_class: measurement
     unit_of_measurement: "%"
@@ -306,18 +311,13 @@ sensor:
                 - 2.3306     ->     21.5
                 - 2.0899     ->     36.0
     on_value_range:
-    #  - above: ${water_temp_heating_pump_to_be_fully_on}
-    #    below: ${max_water_temp}
-    #    then:
-    #      - switch.turn_off: normal_run_auger_enabler # for pwm to kick in
-
       - above: ${max_water_temp}
         then:
           - button.press: start_extinguishing_virtual_button
           - script.wait: normal_extinguish_script
           - text_sensor.template.publish:
                                   id: unexpected
-                                  state: "Maybe not needed...Max Water Temperature Reached, extinuishing for now"
+                                  state: "Max Water Temperature Reached, extinuishing"
           - delay: 5s
           #todo maintain temp for domestic water boiler, wait until temp goes back to an acceptable level and then turn off pump
           - text_sensor.template.publish:
@@ -348,7 +348,94 @@ sensor:
                 - 2.3306     ->     21.5
                 - 2.0899     ->     36.0
 
-         
+  - platform: template
+    accuracy_decimals: 7
+    update_interval: 1s
+    id: auger_current_feed
+    name: auger_current_feed
+    unit_of_measurement: "Kg/H"
+    lambda: |-
+          bool ignition = id(ignition_auger_enabler).state;
+          bool stabilization = id(stabilization_auger_enabler).state;
+          bool normal_run = id(normal_run_auger_enabler).state;
+          if (ignition) {
+           return id(auger_percent_on_ignition).state;
+          }
+          else if(stabilization) {
+           return id(auger_percent_on_stabilization).state; 
+          }
+          else if(normal_run) {
+            if (isnanf(id(auger_modulation_status).state)) {
+              return id(auger_percent_on_normal_run).state;
+            } 
+            else {
+              return id(auger_modulation_status).state;
+            }
+          }
+          else { 
+            return 0;
+          }      
+    filters:
+         #time s        percent on        quantity            medium_lenght
+         #120            45                    85   g            2.5cm?
+         #120            15                    32   g            idem
+         #120            30                    59   
+         #120            20                    49   
+         #120            10                    17   
+         #120            50                    112  
+         #120            40                    82   
+         #120            90                    190  
+         #120            5                     12   
+         #120            75                    153           
+         #
+         # 
+         #time s        percent on        quantity/120                            medium_lenght
+         #1            45                    0.7083333333333333   g/s              2.5cm?
+         #1            15                    0.2666666666666667   g/s                idem
+         #1            30                    0.4916666666666667   
+         #1            20                    0.4083333333333333   
+         #1            10                    0.1416666666666667   
+         #1            50                    0.9333333333333333  
+         #1            40                    0.6833333333333333   
+         #1            90                    1.583333333333333  
+         #1            5                     0.1   
+         #1            75                    1.275
+         #   liniar regression:
+         #                  grams/s = 0.0173300283 * percent_on + 0.0006255902
+      - lambda:  |-
+              float lambzda = 0.0173300283 * x + 0.0006255902;
+              bool prefilling = id(auger_status).state == "Prefilling...";
+              float prefill_rate = ${auger_fully_on_grams_per_second};
+              if (prefilling) {
+                return prefill_rate;
+              }
+              else if (lambzda < 0.0024) {
+              return 0;
+              }
+              else {
+                return lambzda;
+              }
+      - multiply: 3.6 # g/s to kg/h
+
+      
+  - platform: template
+    accuracy_decimals: 0
+    update_interval: 1s
+    id: power
+    name: "Putere Centrala"
+    unit_of_measurement: "W"
+    lambda: return id(auger_current_feed).state * 1000 * ${pellet_kwh_per_kg} * 0.9;  # 10% estimated loss
+          
+  - platform: integration
+    id: total_consumption
+    name: "Consum Peleti"
+    state_class: total_increasing
+    time_unit: h
+    unit_of_measurement: kg
+    sensor: auger_current_feed
+    restore: true
+    accuracy_decimals: 4
+    integration_method: left
 
 ads1115:
   - address: 0x48
@@ -362,6 +449,14 @@ switch:
     # conector 1 stanga jos
     id: auger_switch
     pin: 18 
+    restore_mode: always_off
+    on_turn_on:
+      then:
+        - output.turn_on: TM1638Led2
+    on_turn_off:
+      then:
+        - output.turn_off: TM1638Led2
+    
 
   - platform: gpio
     # conector stanga lateral colt, un singur pin
@@ -370,6 +465,12 @@ switch:
     pin: 14
     inverted: False
     restore_mode: always_off
+    on_turn_on:
+      then:
+        - output.turn_on: TM1638Led3
+    on_turn_off:
+      then:
+        - output.turn_off: TM1638Led3
 
   - platform: gpio
     # conector 2 stanga jos
@@ -377,6 +478,12 @@ switch:
     id: exhaust_fan_switch
     pin: 7
     inverted: False
+    on_turn_on:
+      then:
+        - output.turn_on: TM1638Led1
+    on_turn_off:
+      then:
+        - output.turn_off: TM1638Led1
     
   - platform: gpio
   # conector 3 stanga jos
@@ -384,7 +491,14 @@ switch:
     id: heating_pump_switch
     pin: 6
     inverted: True
-    restore_mode: restore_default_on
+    restore_mode: always_on
+    on_turn_on:
+      then:
+        - output.turn_on: TM1638Led4
+    on_turn_off:
+      then:
+        - output.turn_off: TM1638Led4
+
 
   - platform: gpio
   # conector 4 stanga jos
@@ -392,6 +506,12 @@ switch:
     id: dw_pump_switch
     pin: 15
     inverted: False
+    on_turn_on:
+      then:
+        - output.turn_on: TM1638Led5
+    on_turn_off:
+      then:
+        - output.turn_off: TM1638Led5
 
 ########### end hardware switches  ###########
   - platform: template
@@ -401,21 +521,21 @@ switch:
     restore_mode: restore_default_off
 
   - platform: template
-    name: "Ignition auger dozer"
+    name: "auger_dozer_ignition"
     id: ignition_auger_enabler
     optimistic: true
     on_turn_off:
       - switch.turn_off: auger_switch
 
   - platform: template
-    name: "stabilization auger dozer"
+    name: "auger_dozer_stabilization"
     id: stabilization_auger_enabler
     optimistic: true
     on_turn_off:
       - switch.turn_off: auger_switch
 
   - platform: template
-    name: "normal run auger dozer"
+    name: "auger_dozer_normal_run"
     id: normal_run_auger_enabler
     optimistic: true
     on_turn_off:
@@ -459,31 +579,62 @@ switch:
 #    id: exhaust_fan_switch_modulated
 #    optimistic: true
 
-font:
-  # gfonts://family[@weight]
-  - file: "gfonts://Roboto"
-    id: roboto
-    size: 11
+#font:
+#  # gfonts://family[@weight]
+#  - file: "gfonts://Roboto"
+#    id: roboto
+#    size: 11
+
+#display:
+#  - platform: ssd1306_i2c
+#    model: "SSD1306 128x64"
+#    address: 0x3C
+#    contrast: 90%
+#    rotation: 180
+#    update_interval: 30s
+#    lambda: |-
+#       it.printf(0, 0, id(roboto), "%s", id(stove_status).state.c_str());
+#       it.printf(0, 15, id(roboto), "Water:%.2f,Target:%.0f°C", id(stove_water_temp).state, id(water_temp_heating_pump_to_be_fully_on).state);
+#       it.printf(0, 30, id(roboto), "Modulation: %.0f%%/10S", id(auger_modulation_status).state);
+#       it.printf(0, 45, id(roboto), "Exhaust:%.0f°CAmbient:%.1f°C", id(exhaust_temp).state, id(ambient_temp).state);
+
 
 display:
-  - platform: ssd1306_i2c
-    model: "SSD1306 128x64"
-    address: 0x3C
-    contrast: 90%
-    rotation: 180
-    update_interval: 30s
-    lambda: |-
-       it.printf(0, 0, id(roboto), "%s", id(stove_status).state.c_str());
-       it.printf(0, 15, id(roboto), "Water:%.2f,Target:%.0f°C", id(stove_water_temp).state, id(water_temp_heating_pump_to_be_fully_on).state);
-       it.printf(0, 30, id(roboto), "Modulation: %.0f%%/10S", id(auger_modulation_status).state);
-       it.printf(0, 45, id(roboto), "Exhaust:%.0f°CAmbient:%.1f°C", id(exhaust_temp).state, id(ambient_temp).state);
-
-
-       
+  platform: tm1638
+  stb_pin: 36
+  clk_pin: 13
+  dio_pin: 12
+  intensity: 7
+  update_interval: 500ms
+  lambda: |-
+      it.printf(0, "        ");
+      it.printf(0, "%.1f'C", id(stove_water_temp).state);
        
 output:         
-
- 
+  - platform: tm1638
+    id: TM1638Led1
+    led: 0
+  - platform: tm1638
+    id: TM1638Led2
+    led: 1
+  - platform: tm1638
+    id: TM1638Led3
+    led: 2
+  - platform: tm1638
+    id: TM1638Led4
+    led: 3
+  - platform: tm1638
+    id: TM1638Led5
+    led: 4
+  - platform: tm1638
+    id: TM1638Led6
+    led: 5
+  - platform: tm1638
+    id: TM1638Led7
+    led: 6
+  - platform: tm1638
+    id: TM1638Led8
+    led: 7
   - platform: ledc
     id: rtttl_out
     pin: 35
@@ -557,36 +708,37 @@ output:
 #            value: !lambda 'return state;'
 
 binary_sensor:
-  - platform: gpio
-    name: "Rotary Click"
-    pin:
-      number: 13
-      inverted: true
-      mode:
-        input: true
-        pullup: true
+  - platform: tm1638
+    name: "Button 1"
+    id: TM1638Button1
+    key: 0
     filters:
-      - delayed_on: 50ms
-      - delayed_off: 50ms
+      - delayed_on: 2.5s
     on_press:
-      - button.press: start_extinguishing_virtual_button
-      - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
-#      - climate.control:
-#                id: stove_climate
-#                mode: "OFF"
-    on_double_click:
-      - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
-      - delay: 1s
+     then:
       - button.press: start_ignition_virtual_button
 
-      
-#       - if:
-#          condition:
-#            - lambda: 'return id(stove_climate).mode == CLIMATE_MODE_OFF;'
-#          then:
-#            - climate.control:
-#                id: stove_climate
-#                mode: "heat"
+
+  - platform: tm1638
+    name: "Button 2"
+    id: TM1638Button2
+    key: 1
+    filters:
+      - delayed_on: 50ms
+    on_press:
+     then:
+      - button.press: start_extinguishing_virtual_button
+
+
+  - platform: tm1638
+    name: "Button 8"
+    id: TM1638Button8
+    key: 7
+    filters:
+      - delayed_on: 2.5s
+    on_press:
+     then:   
+      - button.press: restartus
             
 
 
@@ -640,6 +792,19 @@ binary_sensor:
     id: "boot_completed"
     name: "boot_completed"
     internal: False
+    on_press:
+      then:
+        - while:
+             condition:
+               - text_sensor.state:
+                     id: stove_status
+                     state: 'Ready for ignition'
+             then:
+               - output.turn_on: TM1638Led8
+               - delay: 1s
+               - output.turn_off: TM1638Led8
+               - delay: 1s
+
 
   - platform: template
     id: "water_pressure_good"
@@ -741,20 +906,9 @@ web_server:
   local: true
 
 button:
-  - platform: template
-    name: nan_test_publish
-    on_press:
-       then:
-         - sensor.template.publish:
-                            id: auger_modulation_status
-                            state: "nan"
-  - platform: template
-    name: nan_test_unpublish
-    on_press:
-       then:
-         - sensor.template.publish:
-                            id: auger_modulation_status
-                            state: "69"
+  - platform: safe_mode
+    id: safe_moude
+    name: safe_mode
 
   - platform: template
     name: rttl-boot
@@ -769,16 +923,18 @@ button:
       - script.execute: air_pressure_binary_sensor_checkup
 
 
-
   - platform: template                
     name: "Start ignition"
     id: start_ignition_virtual_button
     on_press:
+      - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
       - script.wait: booting_script
       - if:
           condition:
-            - binary_sensor.is_on: water_pressure_good
+            - lambda: 'return id(water_pressure).state > ${min_water_pressure};'
+            - lambda: 'return id(water_pressure).state < ${max_water_pressure}*0.75;'
           then:
+            - lambda: id(water_pressure_good).publish_state(true);
             - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
             - if:
                condition:
@@ -838,6 +994,7 @@ button:
                                      state: "Attempted ignition in running mode"
           else:
               - rtttl.play: long:d=1,o=5,b=100:e6
+              - lambda: id(water_pressure_good).publish_state(false);
               - text_sensor.template.publish:
                                        id: unexpected
                                        state: "Water pressure error - won't proceed" 
@@ -846,14 +1003,27 @@ button:
     name: "Start extinguishing"
     id: start_extinguishing_virtual_button
     on_press:
-      - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
-      - script.wait: ignition_script
-     # - switch.turn_on: heating_pump_switch
       - script.execute: normal_extinguish_script
+      - if:
+          condition:
+              - binary_sensor.is_on: is_running_ignition_script
+          then:
+              - text_sensor.template.publish:
+                                       id: unexpected
+                                       state: "Will extinguishing after ignition"
+              - rtttl.play: long:d=1,o=5,b=100:e6
+          else:
+              - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
+          
+          
+
+      
+     # - switch.turn_on: heating_pump_switch
+      
 
   - platform: restart
     name: "ESP Restart"
-    id: esphomer_restart
+    id: restartus
 
   - platform: template
     name: "test remember exhaust temp"
@@ -896,6 +1066,103 @@ text_sensor:
     update_interval: 1s
 
 number:
+  ##### begin dummy sensors here####
+  - platform: template
+    internal: true
+    name: "dummy_water_pressure"
+    id: dummy_water_pressure
+    unit_of_measurement: "hPa"
+    min_value: -5
+    max_value: 9000
+    mode: box
+    step: 1
+    optimistic: true
+    restore_value: true
+    on_value_range:
+      - above: 2500 #todo substiturions
+        then:
+          - lambda: id(water_pressure_good).publish_state(false);
+          - text_sensor.template.publish:
+                                  id: unexpected
+                                  state: "Max Water Pressure Reached, extinuishing.."
+          - button.press: start_extinguishing_virtual_button
+          - script.wait: normal_extinguish_script
+          - delay: 5s
+          - text_sensor.template.publish:
+                                  id: stove_status
+                                  state: "Abnormal water pressure (too high)"
+
+      - below: 500 #todo substiturions
+        then:
+          - lambda: id(water_pressure_good).publish_state(false);
+          - text_sensor.template.publish:
+                                  id: unexpected
+                                  state: "Min Water Pressure Reached, extinuishing.."
+          - button.press: start_extinguishing_virtual_button
+          - script.wait: normal_extinguish_script
+          - delay: 5s
+          - text_sensor.template.publish:
+                                  id: stove_status
+                                  state: "Abnormal water pressure (too low)"
+  
+  - platform: template
+    internal: true
+    name: "dummy_ambient_temp"
+    id: dummy_ambient_temp
+    unit_of_measurement: "°C"
+    min_value: -5
+    max_value: 500
+    mode: box
+    step: 0.5
+    optimistic: true
+    restore_value: true
+
+  - platform: template
+    internal: true
+    name: "dummy_exhaust_temp"
+    id: dummy_exhaust_temp
+    unit_of_measurement: "°C"
+    min_value: -5
+    max_value: 500
+    mode: box
+    step: 1
+    optimistic: true
+    restore_value: true
+
+    #filters: ##flters don't work here, wpuld work with intermediary template sensor if needed
+    #   - skip_initial: 30 #max 60s or timeout error
+    #   - max
+
+  - platform: template
+    name: "dummy_stove_water_temp"
+    internal: true
+    id: dummy_stove_water_temp
+    unit_of_measurement: "°C"
+    min_value: -5
+    max_value: 500
+    mode: box
+    step: 0.01
+    optimistic: true
+    restore_value: true
+    on_value_range:
+    #  - above: ${water_temp_heating_pump_to_be_fully_on}
+    #    below: ${max_water_temp}
+    #    then:
+    #      - switch.turn_off: normal_run_auger_enabler # for pwm to kick in
+
+      - above: ${max_water_temp}
+        then:
+          - button.press: start_extinguishing_virtual_button
+          - script.wait: normal_extinguish_script
+          - text_sensor.template.publish:
+                                  id: unexpected
+                                  state: "Maybe not needed...Max Water Temperature Reached, extinuishing for now"
+          - delay: 5s
+          #todo maintain temp for domestic water boiler, wait until temp goes back to an acceptable level and then turn off pump
+          - text_sensor.template.publish:
+                                  id: stove_status
+                                  state: "Max Water Temperature Reached" #idle?
+                                  
 #  - platform: template
 #    name: "number_for_testing_being_changed_by_output"
 #    id: number_for_testing_being_changed_by_output
@@ -916,6 +1183,15 @@ number:
 #        - output.set_level:
 #            id: output_for_pid
 #            level: !lambda 'return x;'
+  - platform: template
+    name: "test_this_number"
+    id: test_this_number
+    min_value: 0
+    max_value: 1000
+    mode: box
+    step: 0.1
+    optimistic: true
+    initial_value: 0.1
 
   - platform: template
     name: "stove exhaust temp before ignition"
@@ -939,8 +1215,8 @@ number:
   - platform: template
     name: "auger_percent_on_stabilization"
     id: auger_percent_on_stabilization
-    min_value: 0
-    max_value: 100
+    min_value: 15
+    max_value: 50
     mode: box
     step: 1
     optimistic: true
@@ -959,8 +1235,8 @@ number:
   - platform: template
     name: "water_temp_heating_pump_to_be_fully_on"
     id: water_temp_heating_pump_to_be_fully_on
-    min_value: 0
-    max_value: 70
+    min_value: 15
+    max_value: 80
     mode: box
     step: 1
     optimistic: true
@@ -1014,7 +1290,8 @@ interval:
       then:
         - if: 
             condition:
-              # - lambda: 'return ${water_temp_heating_pump_to_be_fully_on} - id(stove_water_temp).state < 10;'
+              - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+              - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state >= 0;'
               - binary_sensor.is_on: boot_completed
                #i have to learn this lambda: lambda |- condition for future use
               #- lambda: !lambda |-   
@@ -1028,15 +1305,29 @@ interval:
                     float formula = round(1.0221 * pow(waterdelta, 2) - 20.1727 * waterdelta + 99.9309);
                      // the range of 10 had to be hardcoded for this exponential formula to work. for other range value,
                      // you need to find its corresponding polynomial regression formula
-                    if (watertemp >= temppumpfullyon - 10 && watertemp <= temppumpfullyon) {
-                      return formula;
-                    } 
-                    if (watertemp < temppumpfullyon - 10) {
-                      return 0;
-                    } 
-                    else { 
-                      return 100;
-                    }
+                    return formula;
+            else:
+              - if:
+                  condition:
+                   - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state > 10;'
+                   - binary_sensor.is_on: boot_completed
+                  then:
+                   - number.set:
+                        id: heating_pump_pwm_set_output_percent
+                        value: 0
+                  else:
+                    if:
+                      condition:
+                        - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state < 0;'
+                        - binary_sensor.is_on: boot_completed
+                      then:
+                         - number.set:
+                              id: heating_pump_pwm_set_output_percent
+                              value: 100
+                      
+                 
+                 
+     
 
 
     #AUGER 
@@ -1070,9 +1361,9 @@ interval:
                                  float watertemp = id(stove_water_temp).state;
                                  float temppumpfullyon = id(water_temp_heating_pump_to_be_fully_on).state;
                                  float waterdelta = watertemp - temppumpfullyon;
-                                 float formula = round(((-2.5 * waterdelta) + 40)); // auger 15% to 40% on 10 degrees range, hardcoded dp formula
-                                 if (formula >= 40) {
-                                  return 4000;
+                                 float formula = round((-0.2089 * pow(waterdelta, 2)) - (0.882  * waterdelta) + 44.942);
+                                 if (formula >= 45) {
+                                  return 4500;
                                  } 
                                  if (formula<=15) {
                                    return 1500;
@@ -1086,9 +1377,9 @@ interval:
                                   float watertemp = id(stove_water_temp).state;
                                   float temppumpfullyon = id(water_temp_heating_pump_to_be_fully_on).state;
                                   float waterdelta = watertemp - temppumpfullyon;
-                                  float formula = round((-2.5 * waterdelta) + 40); // auger 15% to 40% on 10 degrees range, hardcoded dp formula
-                                  if (formula >= 40) {
-                                   return 40;
+                                  float formula = round((-0.2089 * pow(waterdelta, 2)) - (0.882  * waterdelta) + 44.942);
+                                  if (formula >= 45) {
+                                   return 45;
                                   } 
                                   if (formula<=15) {
                                     return 15;
@@ -1129,8 +1420,95 @@ interval:
 
 
 script:
-   #todo wait condition for faster checking
   - id: air_pressure_binary_sensor_checkup
+    mode: restart
+    then:
+      # off:
+      - switch.turn_off: exhaust_fan_switch
+      - text_sensor.template.publish:
+                      id: air_sensor_checking_ups
+                      state: "exhast fan turned off for checking..."
+     # - lambda: id(air_pressure_binary_sensor).publish_state(false); # dummy pass
+      - wait_until:
+          condition:
+            - binary_sensor.is_off: air_pressure_binary_sensor 
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'exhast fan turned off for checking...'
+          timeout: 10s
+      - if:
+          condition:
+            - binary_sensor.is_off: air_pressure_binary_sensor 
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'exhast fan turned off for checking...'
+          then:
+            - switch.turn_on: exhaust_fan_switch
+            - text_sensor.template.publish:
+                      id: air_sensor_checking_ups
+                      state: "exhast fan turned on for checking..."
+          else:
+            - text_sensor.template.publish:
+                      id: stove_status
+                      state: "Air pressure sensor failure at stage 1"
+            - text_sensor.template.publish:
+                      id: air_sensor_checking_ups
+                      state: "Air pressure sensor not off at fan stop"
+            - script.stop: air_pressure_binary_sensor_checkup                  
+      
+      #on:
+      #- lambda: id(air_pressure_binary_sensor).publish_state(true); #dummy pass
+      - wait_until:
+          condition:
+            - binary_sensor.is_on: air_pressure_binary_sensor
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'exhast fan turned on for checking...'
+          timeout: 7s
+      - if:
+          condition:
+            - binary_sensor.is_on: air_pressure_binary_sensor
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'exhast fan turned on for checking...'
+          then:
+            - text_sensor.template.publish:
+                      id: air_sensor_checking_ups
+                      state: "Air pressure sensor responded at fan startup, continuing..."
+          else:
+            - text_sensor.template.publish:
+                      id: stove_status
+                      state: "Air pressure sensor failure at stage 2"
+            - script.stop: air_pressure_binary_sensor_checkup
+      - switch.turn_off: exhaust_fan_switch
+      
+      #off again:
+     # - lambda: id(air_pressure_binary_sensor).publish_state(false); # dummy pass
+      - wait_until:
+          condition:
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'Air pressure sensor responded at fan startup, continuing...'
+            - binary_sensor.is_off: air_pressure_binary_sensor
+          timeout: 10s
+      - if:
+          condition:
+            - text_sensor.state:
+                id: air_sensor_checking_ups
+                state: 'Air pressure sensor responded at fan startup, continuing...'
+            - binary_sensor.is_off: air_pressure_binary_sensor
+          then:
+            - text_sensor.template.publish:
+                      id: air_sensor_checking_ups
+                      state: "Air pressure sensor checked"
+          else:
+            - text_sensor.template.publish:
+                      id: stove_status
+                      state: "Air pressure sensor failure at stage 3"
+                      
+      - script.stop: air_pressure_binary_sensor_checkup
+
+  - id: air_pressure_binary_sensor_checkup_old
     mode: restart
     then:
       - switch.turn_off: exhaust_fan_switch
@@ -1242,26 +1620,25 @@ script:
                                     id: auger_status
                                     state: "Prefilling..."                
                     - delay: ${auger_prefill_time}
-                    #- if:
-                    #   condition:
-                    #    - switch.is_on: auger_periodic_feed_while_ignition  
-                    #   then: 
-                    #    - delay: ${auger_prefill_time}
-                    #    - delay: ${auger_prefill_time} #intentionally trice? remove function if does not work
+                    # publish here
                     - switch.turn_off: auger_switch
                     - switch.turn_on: prefilled
                 else:
                     - text_sensor.template.publish:
                                     id: auger_status
-                                    state: "Skipped prefilling..." #todo tests for remembering while periodif feed dsiabled
+                                    state: "Skipped prefilling..."
             - switch.turn_on: ignition_auger_enabler
             - text_sensor.template.publish:
                       id: auger_status
                       state: "Dosing for ignition"
+            - script.execute: ignition_auger_timeout_stopper_script
+            #- number.set:
+            #      id: exhaust_temp # dummy pass, 101 will bypass stabilisation as well
+            #      value: 101
+
             - wait_until:
                 condition:
-                 #todo here minimum ignition temp ##maybe not needed
-                 - lambda: 'return id(exhaust_temp).state > id(stove_exhaust_temp_before_ignition).state + ${ignition_delta_to_confirmed};'
+                   - lambda: 'return id(exhaust_temp).state > id(stove_exhaust_temp_before_ignition).state + ${ignition_delta_to_confirmed};'
                 timeout: ${wait_for_ignition_time}
             - if:
                 condition:
@@ -1282,7 +1659,7 @@ script:
                           - script.stop: ignition_script
                         else:
                           - text_sensor.template.publish:
-                              id: unexpected
+                              id: stove_status
                               state: "Extinguishing script prevented switching to stabilization"
                           - script.stop: ignition_script
 
@@ -1294,6 +1671,7 @@ script:
                   - switch.turn_off: igniter_switch
                   - switch.turn_off: ignition_auger_enabler
                   - script.execute: normal_extinguish_script
+                  - script.stop: ignition_auger_timeout_stopper_script
                   - delay: 1s #insert text while executing above script
                   - text_sensor.template.publish:
                             id: stove_status
@@ -1304,14 +1682,37 @@ script:
                             id: stove_status
                             state: "Failed Ignition"
                   - script.stop: ignition_script
-            
+                      
+  - id: ignition_auger_timeout_stopper_script
+    mode: single
+    then:
+      - delay: ${wait_for_preignition_time}
+      - if:
+         condition:
+            - lambda: 'return id(exhaust_temp).state < id(stove_exhaust_temp_before_ignition).state + 10;' #todo better exaust sensor noise filtering?
+         then:
+            - text_sensor.template.publish:
+                            id: auger_status
+                            state: "Paused dosing for ignition, waiting for temp increase.." 
+            - switch.turn_off: ignition_auger_enabler
+            - wait_until:
+                condition:
+                   - lambda: 'return id(exhaust_temp).state > id(stove_exhaust_temp_before_ignition).state + 10;'
+                # no timeout
+            - switch.turn_on: ignition_auger_enabler
+            - text_sensor.template.publish:
+                            id: auger_status
+                            state: "Resumed dosing for ignition" 
+            - script.stop: ignition_auger_timeout_stopper_script
+                
+
 
   - id: normal_extinguish_script     #todo dinamic timing depending on memorised temp
     mode: restart
     then:
       - switch.turn_on: exhaust_fan_switch
       - switch.turn_off: extinguish_completed
-      - switch.turn_off: ignition_auger_enabler
+      #- switch.turn_off: ignition_auger_enabler
       - switch.turn_off: stabilization_auger_enabler
       - switch.turn_off: normal_run_auger_enabler
       - switch.turn_off: auger_switch
@@ -1321,9 +1722,12 @@ script:
                             id: stove_status
                             state: "Extinguishing"  
 
-      - text_sensor.template.publish:                #clear for monitoring script to work again if needed
+      - text_sensor.template.publish:               
                             id: exhaust_fan_status
                             state: ""  
+      - text_sensor.template.publish:             
+                            id: auger_status
+                            state: ""                    
       - if:
           condition:
             - script.is_running: ignition_script 
@@ -1374,7 +1778,6 @@ script:
       - switch.turn_on: extinguish_completed
       - script.stop: normal_extinguish_script
               
-
   - id: stabilization_script
     mode: single
     then:
@@ -1462,6 +1865,9 @@ script:
                             id: auger_status
                             state: ""
       - delay: 5s
+      #- number.set:
+      #            id: stove_water_temp # dummy pass
+      #            value: 69
 
       - text_sensor.template.publish:
                             id: stove_status
@@ -1512,6 +1918,7 @@ script:
                             id: exhaust_fan_status
                             state: ""
       - switch.turn_off: exhaust_fan_switch
+     # - lambda: id(air_pressure_binary_sensor).publish_state(false); ##for dummy to pass
       - wait_until:
                   condition:
                     - binary_sensor.is_off: air_pressure_binary_sensor
@@ -1535,6 +1942,7 @@ script:
             - script.execute: normal_extinguish_script
           else: 
             - switch.turn_on: exhaust_fan_switch
+           # - lambda: id(air_pressure_binary_sensor).publish_state(true); ##for dummy to pass
             - wait_until:
                   condition:
                     - binary_sensor.is_on: air_pressure_binary_sensor
@@ -1595,12 +2003,12 @@ script:
 
 
 
+  
 
 
     #todo other monitoring scriptsunexpe
   - id: monitoring_unexpected_script_for_normal_operation
     mode: restart
-    # template timeout logger warns....
     then:
       - wait_until:
             condition: #needs more
@@ -1619,6 +2027,9 @@ script:
                                   id: stove_status
                                   state: "Error ?"
       - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
+      - text_sensor.template.publish:
+                                  id: auger_status
+                                  state: "Stopped"
       - if:
           condition:
             - lambda: 'return id(exhaust_temp).state > ${exhaust_absolute_max_temp};'
