@@ -1587,31 +1587,7 @@ interval:
                             id: auger_modulation_status
                             state: "nan"
                 - switch.turn_off: auger_switch
-        
-    #FAN   #unstable, todo sigma delta for flame unfeed at dangerous temps.
-#   - interval: 0.25s
-#     id: exhaust_fan_duty
-#     then:
-#        if:
-#          condition:
-#            - switch.is_on: exhaust_fan_switch_modulated
-#          then:
-#              - switch.turn_on: exhaust_fan_switch
-#              - delay: 0.124s
-#              - switch.turn_off: exhaust_fan_switch
-
       
-
-
-#      then:
-#        if:
-#          condition:
-#            - switch.is_on: exhaust_fan_switch_modulated
-#          then:max_ambient_temp
-#              - switch.turn_on: exhaust_fan_switch
-#              - delay: !lambda "return id(fan_percent).state;"
-#              - switch.turn_off: exhaust_fan_switch
-
 script:
   - id: air_pressure_binary_sensor_checkup
     mode: restart
