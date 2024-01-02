@@ -1,5 +1,11 @@
-#todo
+
+#todo testare script stingere in timpul aprinderii
+#dalasuri pe tur, retur si evacuare afara
+#limitare  putere ventilator la temperaturi prea mari, pentru prestingere, posibil sa mearga sigma-delta de data asta.
+#decide cu ce porneste, termostat clasic wireless, wifi, senzor temp fir prin aproprierea centralei
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
+#entitate climate
+#apoi ecranul.
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "75" < min_ignition_water_temp: "55"
 
 substitutions:
@@ -170,6 +176,14 @@ sensor:
               send_first_at: 5
               quantile: .9
 
+      
+
+
+
+
+
+
+  
 
   - platform: max31855
     spi_id: spi1
@@ -246,6 +260,7 @@ sensor:
         then:
           - lambda: id(water_pressure_good).publish_state(false);
           - lambda: id(boot_completed).publish_state(false);
+          - switch.turn_on: heating_pump_switch
           - text_sensor.template.publish:
                                   id: unexpected
                                   state: "Max Water Pressure Reached, extinuishing.."
@@ -260,6 +275,7 @@ sensor:
         then:
           - lambda: id(water_pressure_good).publish_state(false);
           - lambda: id(boot_completed).publish_state(false);
+          - switch.turn_on: heating_pump_switch
           - text_sensor.template.publish:
                                   id: unexpected
                                   state: "Min Water Pressure Reached, extinuishing.."
@@ -301,6 +317,7 @@ sensor:
       - above: ${max_water_temp}
         then:
           - lambda: id(boot_completed).publish_state(false);
+          - switch.turn_on: heating_pump_switch
           - button.press: start_extinguishing_virtual_button
           - script.wait: normal_extinguish_script
           - text_sensor.template.publish:
@@ -1075,6 +1092,7 @@ button:
               - rtttl.play: long:d=1,o=5,b=100:e6
               - lambda: id(water_pressure_good).publish_state(false);
               - lambda: id(boot_completed).publish_state(false);
+              - switch.turn_on: heating_pump_switch
               - text_sensor.template.publish:
                                        id: stove_status
                                        state: "Water pressure error - won't proceed"  
@@ -1587,7 +1605,31 @@ interval:
                             id: auger_modulation_status
                             state: "nan"
                 - switch.turn_off: auger_switch
+        
+    #FAN   #unstable, todo sigma delta for flame unfeed at dangerous temps.
+#   - interval: 0.25s
+#     id: exhaust_fan_duty
+#     then:
+#        if:
+#          condition:
+#            - switch.is_on: exhaust_fan_switch_modulated
+#          then:
+#              - switch.turn_on: exhaust_fan_switch
+#              - delay: 0.124s
+#              - switch.turn_off: exhaust_fan_switch
+
       
+
+
+#      then:
+#        if:
+#          condition:
+#            - switch.is_on: exhaust_fan_switch_modulated
+#          then:max_ambient_temp
+#              - switch.turn_on: exhaust_fan_switch
+#              - delay: !lambda "return id(fan_percent).state;"
+#              - switch.turn_off: exhaust_fan_switch
+
 script:
   - id: air_pressure_binary_sensor_checkup
     mode: restart
@@ -2118,6 +2160,7 @@ script:
                             id: stove_status
                             state: "Error, check exhaust temp sensor"
             - lambda: id(boot_completed).publish_state(false);
+            - switch.turn_on: heating_pump_switch
             - script.stop: booting_script
       
       - if: 
@@ -2166,6 +2209,7 @@ script:
                       id: stove_status
                       state: "Error, check air pressure sensor (at boot)"
             - lambda: id(boot_completed).publish_state(false);
+            - switch.turn_on: heating_pump_switch
             - script.stop: booting_script
           else:
             - text_sensor.template.publish:
