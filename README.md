@@ -11,7 +11,7 @@ Highlighted features:
 - Can be tested with cold hardware or simply no hwardware, just a flashed ESP.
 
 Disclaimer: 
-IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RESPOSIBLE FOR IT IN ANY WAY.
+IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RESPONSIBLE FOR IT IN ANY WAY.
 
 Hardware used:  
  - Sensors:
