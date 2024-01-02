@@ -46,3 +46,7 @@ It's all switches and esphome is very good at it.
 ![20231104_203415](https://github.com/samuelolteanu/esphome-pellet-stove-controller/assets/85267083/3708bd34-eedb-4afb-96ba-43884e9346f4)
 
 
+
+https://github.com/samuelolteanu/esphome-pellet-stove-controller/assets/85267083/059ff512-fc86-4e0c-a212-13c8246e5940
+
+
