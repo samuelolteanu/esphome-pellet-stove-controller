@@ -9,7 +9,7 @@ Highlighted features:
 - Fan throttle via sigma delta modulation when needed.
 - Pump freeze protection 
 
-I will provide a separate file for the disclaiomer. Plenty of talk there.
+I will provide a separate file for the disclaimer. Plenty to talk there.
 
 Hardware used:  
  - Sensors:
