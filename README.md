@@ -30,7 +30,7 @@ If:
  - temp < set_point - 10  -> heating pump is fully off
  - temp < set_point and > set_point - 10 -> granular 0-100% heating pump on/off based on a regression controlling slow_pwm output.
  - temp > set_point and < set_point + 10 -> auger modulation ON 4.5s to 1.5s (out of 10 seconds) by a regression
- - temp > set_point + 10 -> auger set to 1.5s (min) up until max_water_temp if will forcefully shut down with error: fan throttle via sigma delta modulation to "suffocate" flame, fan trottle stops at a safer temp, them normal extinguish process takes over.  
+ - temp > set_point + 10 -> auger set to 1.5s (min) up until max_water_temp after wich it will forcefully shut down with error: fan throttle via sigma delta modulation to "suffocate" flame, then normal extinguish process takes over at a safer temp.  
 
 ![internal_water_temp_control](https://github.com/samuelolteanu/esphome-pellet-stove-controller/assets/85267083/fb90b2ad-fa58-4964-86ae-ab55a4b77e26)
 
