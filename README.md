@@ -42,6 +42,7 @@ Calibrating the thermistor
 ![calibrating the original thermistor](https://github.com/samuelolteanu/esphome-pellet-stove-controller/assets/85267083/bf9c8848-4a19-4f81-8012-9a4b9a6530be)
 
 The expander here was deleted. ESP32 S2/S3 has plenty of ports for this project and the PCF8575 introduced some delay warnings.
+It's all switches and esphome is very good at it.
 ![20231104_203415](https://github.com/samuelolteanu/esphome-pellet-stove-controller/assets/85267083/3708bd34-eedb-4afb-96ba-43884e9346f4)
 
 
