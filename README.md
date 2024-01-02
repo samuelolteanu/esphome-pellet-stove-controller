@@ -28,7 +28,7 @@ While a pid controller could have make it more precise (ESPHome provides this if
 As a quick explanation, the stove tries to keep its temp around a set point with relatively generous delta (can be modified but works well as is) where:
 If:
  - temp < set_point - 10  -> heating pump is fully off
- - temp < set_point and > set_point - 10 -> granular 0-100% heating pump on/off based on a regression controlled by slow_pwm
+ - temp < set_point and > set_point - 10 -> granular 0-100% heating pump on/off based on a regression controlling slow_pwm output.
  - temp > set_point and < set_point + 10 -> auger modulation ON 4.5s to 1.5s (out of 10 seconds) by a regression
  - temp > set_point + 10 -> fan throttle via sigma delta modulation to "suffocate" flame, fan trottle stops at a safer temp, them normal extinguish process takes over.  
 
