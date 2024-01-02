@@ -1,4 +1,5 @@
 I proudly present you a fully featured pellet controller based on ESPHome. The stove is an Alfa Plam 14KW that had a dead (expensive) and not well documented motherboard. 
+
 Highlighted features: 
 - Constant (adjustable) internal water temperature without an inlet-outlet mixer
 - Auger Automatic Modulation
