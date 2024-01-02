@@ -7,7 +7,8 @@ Highlighted features:
 - Completly autonomous so Home Assistant or WIFI for that matter is not a must
 - Pellet consumption and power output estimation (in watts) based on pellet usage.
 - Fan throttle via sigma delta modulation when needed.
-- Pump freeze protection 
+- Pump freeze protection
+- Can be tested with cold hardware or simply nor hwardware, just a flashed ESP.
 
 Disclaimer: 
 IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE AND I WILL NOT BE RESPOSIBLE FOR IT IN ANY WAY.
