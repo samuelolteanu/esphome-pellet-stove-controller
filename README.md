@@ -2,7 +2,7 @@ I proudly present you a fully featured pellet controller based on ESPHome. The s
 
 Highlighted features: 
 - Constant (adjustable) internal water temperature without an inlet-outlet mixer
-- Auger Automatic Modulation
+- Advanced auger modulation
 - Web server with everything that is going on.
 - Completly autonomous so Home Assistant or WIFI for that matter is not a must
 - Pellet consumption and power output estimation (in watts) based on pellet usage.
