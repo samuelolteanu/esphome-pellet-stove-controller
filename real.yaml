@@ -1,7 +1,7 @@
 #todo
 #dalasuri pe tur, retur si evacuare afara
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
-#prevenire compilare pentru substituiri invalide ex max_water_temp: "75" < min_ignition_water_temp: "55"
+#prevenire compilare pentru substituiri invalide ex max_water_temp: "49" < min_ignition_water_temp: "50"
 
 substitutions:
   wait_for_preignition_time: "10min"  #time will pause dosing after mentioned time until temperature starts rising
