@@ -1,11 +1,5 @@
-
-#todo testare script stingere in timpul aprinderii
 #dalasuri pe tur, retur si evacuare afara
-#limitare  putere ventilator la temperaturi prea mari, pentru prestingere, posibil sa mearga sigma-delta de data asta.
-#decide cu ce porneste, termostat clasic wireless, wifi, senzor temp fir prin aproprierea centralei
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
-#entitate climate
-#apoi ecranul.
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "75" < min_ignition_water_temp: "55"
 
 substitutions:
