@@ -12,9 +12,9 @@ substitutions:
   maximum_wait_for_stabilization_time: "10min" #time, failed ignition/stabilization at timeout
   minimum_run_of_stabilization_time: "1min" #time, keep stabilization running once met exhaust condition
 
-  auger_percent_on_ignition: "15"#float
+  auger_percent_on_ignition: "15" #float
   auger_percent_on_stabilization: "35" #float
-  auger_percent_on_normal_run: "45"#float, 45 max, 15 min
+  auger_percent_on_normal_run: "45" #float, 45 max, 15 min
   auger_prefill_time: "30s" #time
   
   fan_percent_on_safety: "10"  # integer
@@ -26,9 +26,9 @@ substitutions:
   water_temp_heating_pump_to_be_fully_on: "80" #float, 70 This is the stove water target temp, main thermostat.
 
   max_water_pressure: "2250" #hPa, 1bar=1000hPa  2250
-  min_water_pressure: "500"#float 500
+  min_water_pressure: "500" #float
 
-  exhaust_absolute_max_temp: "200"#float 200
+  exhaust_absolute_max_temp: "200" #float 200
   max_water_temp: "90" #float, should be at least water_temp_heating_pump_to_be_fully_on + 10 so auger modulation would work as expected
  
   pellet_kwh_per_kg: "4.8" #float
