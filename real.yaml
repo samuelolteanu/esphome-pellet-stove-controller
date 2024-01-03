@@ -3,6 +3,8 @@
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "49" < min_ignition_water_temp: "50"
 
+
+
 substitutions:
   wait_for_preignition_time: "10min"  #time will pause dosing after mentioned time until temperature starts rising
   wait_for_ignition_time: "20min" #time, total time until ignition should occur
@@ -10,9 +12,9 @@ substitutions:
   maximum_wait_for_stabilization_time: "10min" #time, failed ignition/stabilization at timeout
   minimum_run_of_stabilization_time: "1min" #time, keep stabilization running once met exhaust condition
 
-  auger_percent_on_ignition: "15" #float
+  auger_percent_on_ignition: "15"#float
   auger_percent_on_stabilization: "35" #float
-  auger_percent_on_normal_run: "45" #float, 45 max, 15 min
+  auger_percent_on_normal_run: "45"#float, 45 max, 15 min
   auger_prefill_time: "30s" #time
   
   fan_percent_on_safety: "10"  # integer
@@ -23,10 +25,10 @@ substitutions:
   min_ignition_water_temp: "50" #float, water_temp_heating_pump_to_be_fully_on -20?
   water_temp_heating_pump_to_be_fully_on: "80" #float, 70 This is the stove water target temp, main thermostat.
 
-  max_water_pressure: "2250" #hPa, 1bar=1000hPa
-  min_water_pressure: "500" #float
+  max_water_pressure: "2250" #hPa, 1bar=1000hPa  2250
+  min_water_pressure: "500"#float 500
 
-  exhaust_absolute_max_temp: "200" #float 200
+  exhaust_absolute_max_temp: "200"#float 200
   max_water_temp: "90" #float, should be at least water_temp_heating_pump_to_be_fully_on + 10 so auger modulation would work as expected
  
   pellet_kwh_per_kg: "4.8" #float
@@ -253,33 +255,59 @@ sensor:
     on_value_range:
       - above: ${max_water_pressure}
         then:
-          - lambda: id(water_pressure_good).publish_state(false);
-          - lambda: id(boot_completed).publish_state(false);
-          - switch.turn_on: heating_pump_switch
-          - text_sensor.template.publish:
-                                  id: unexpected
-                                  state: "Max Water Pressure Reached, extinuishing.."
-          - button.press: start_extinguishing_virtual_button
-          - script.wait: normal_extinguish_script
-          - delay: 5s
-          - text_sensor.template.publish:
-                                  id: stove_status
-                                  state: "Abnormal water pressure (too high)"
+          - if:
+              condition:
+                - binary_sensor.is_on: boot_completed
+              then:
+                - lambda: id(water_pressure_good).publish_state(false);
+                - lambda: id(boot_completed).publish_state(false);
+                - switch.turn_on: heating_pump_switch
+                - text_sensor.template.publish:
+                       id: unexpected
+                       state: "Max Water Pressure Reached, extinuishing.."
+                - button.press: start_extinguishing_virtual_button
+                - wait_until:
+                       condition:
+                         - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+                       timeout: 30min
+                - if:
+                    condition:
+                      - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+                    then:
+                      - switch.turn_off: heating_pump_switch 
+                - script.wait: normal_extinguish_script
+                - delay: 5s
+                - text_sensor.template.publish:
+                                        id: stove_status
+                                        state: "Abnormal water pressure (too high)"
 
       - below: ${min_water_pressure}
         then:
-          - lambda: id(water_pressure_good).publish_state(false);
-          - lambda: id(boot_completed).publish_state(false);
-          - switch.turn_on: heating_pump_switch
-          - text_sensor.template.publish:
-                                  id: unexpected
-                                  state: "Min Water Pressure Reached, extinuishing.."
-          - button.press: start_extinguishing_virtual_button
-          - script.wait: normal_extinguish_script
-          - delay: 5s
-          - text_sensor.template.publish:
-                                  id: stove_status
-                                  state: "Abnormal water pressure (too low)"
+          - if:
+              condition:
+                 binary_sensor.is_on: boot_completed
+              then:
+                 - lambda: id(water_pressure_good).publish_state(false);
+                 - lambda: id(boot_completed).publish_state(false);
+                 - switch.turn_on: heating_pump_switch
+                 - text_sensor.template.publish:
+                                         id: unexpected
+                                         state: "Min Water Pressure Reached, extinuishing.."
+                 - button.press: start_extinguishing_virtual_button
+                 - wait_until:
+                       condition:
+                         - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+                       timeout: 30min
+                 - if:
+                     condition:
+                       - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+                     then:
+                       - switch.turn_off: heating_pump_switch 
+                 - script.wait: normal_extinguish_script
+                 - delay: 5s
+                 - text_sensor.template.publish:
+                                         id: stove_status
+                                         state: "Abnormal water pressure (too low)"
       
 
   - platform: template
@@ -314,6 +342,15 @@ sensor:
           - lambda: id(boot_completed).publish_state(false);
           - switch.turn_on: heating_pump_switch
           - button.press: start_extinguishing_virtual_button
+          - wait_until:
+                 condition:
+                   - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+                 timeout: 30min
+          - if:
+              condition:
+                - lambda: 'return id(water_temp_heating_pump_to_be_fully_on).state - id(stove_water_temp).state <= 10;'
+              then:
+                - switch.turn_off: heating_pump_switch 
           - script.wait: normal_extinguish_script
           - text_sensor.template.publish:
                                   id: unexpected
@@ -1367,7 +1404,7 @@ number:
   - platform: template
     name: "water_temp_heating_pump_to_be_fully_on"
     id: water_temp_heating_pump_to_be_fully_on
-    min_value: 15
+    min_value: 45
     max_value: 80
     mode: box
     step: 1
