@@ -16,7 +16,7 @@ IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RES
 Hardware used:  
  - Sensors:
     - Stoves own 10k themistors, exhaust k type thermocuple, and negative air pressure binary sensor (presostat)
-    - 2x safety thermostats NO in paralell with heating pump and fan relays.
+    - 2x safety thermostats NO in paralell with heating pump and fan relays to bypass them.
     - 0-5 Bar 1/4 water pressure sensor,  DS1820 for ambient temperature 
  - ESP32S2, ADS1115 (NTC sensing, Water Pressure), MAX31855 (can be replaced by an ads1115 channel if calibration is 
    possible and that would make it more realible as well)
