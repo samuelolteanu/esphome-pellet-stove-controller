@@ -24,9 +24,9 @@ substitutions:
   water_temp_heating_pump_to_be_fully_on: "80" #float, 70 This is the stove water target temp, main thermostat.
 
   max_water_pressure: "2250" #hPa, 1bar=1000hPa
-  min_water_pressure: "500"#float
+  min_water_pressure: "500" #float
 
-  exhaust_absolute_max_temp: "200"#float 200
+  exhaust_absolute_max_temp: "200" #float 200
   max_water_temp: "90" #float, should be at least water_temp_heating_pump_to_be_fully_on + 10 so auger modulation would work as expected
  
   pellet_kwh_per_kg: "4.8" #float
