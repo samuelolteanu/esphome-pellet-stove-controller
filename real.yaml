@@ -1,3 +1,4 @@
+#todo
 #dalasuri pe tur, retur si evacuare afara
 #incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "75" < min_ignition_water_temp: "55"
