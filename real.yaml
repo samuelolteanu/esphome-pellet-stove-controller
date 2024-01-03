@@ -10,9 +10,9 @@ substitutions:
   maximum_wait_for_stabilization_time: "10min" #time, failed ignition/stabilization at timeout
   minimum_run_of_stabilization_time: "1min" #time, keep stabilization running once met exhaust condition
 
-  auger_percent_on_ignition: "15"#float
+  auger_percent_on_ignition: "15" #float
   auger_percent_on_stabilization: "35" #float
-  auger_percent_on_normal_run: "45"#float, 45 max, 15 min
+  auger_percent_on_normal_run: "45" #float, 45 max, 15 min
   auger_prefill_time: "30s" #time
   
   fan_percent_on_safety: "10"  # integer
