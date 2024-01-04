@@ -22,8 +22,7 @@ Hardware used:
    possible and that would make it more realible as well)
  - TM1638 Display+LEDs+Buttons Module, passive rtttl
  - 5V Power Supply: normal phone charger.
-   
-
+ - SSR modules, 1x4 active high, 1x4 active low. The 30A relays in the picture were replaced because they were overkill.
 While a pid controller could have make it more precise (ESPHome provides this if I really wanted to), it would introduced some unknowns on my part so I implemented what I know better: liniar regressions.
 As a quick explanation, the stove tries to keep its temp around a set point with relatively generous delta (can be modified but works well as is) where:
 If:
