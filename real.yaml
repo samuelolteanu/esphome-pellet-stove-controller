@@ -1,9 +1,6 @@
-#incercare da a schimba pin 18 auger swicth cu altceva de acolo care poate nu porneste in lymbo mode - rezolvat folosind s
- #ssr active low + pullup 5k
 #todo
 #dalasuri pe tur, retur si evacuare afara
 #prevenire compilare pentru substituiri invalide ex max_water_temp: "49" < min_ignition_water_temp: "50"
-
 
 
 substitutions:
@@ -326,7 +323,7 @@ sensor:
     name: "auger_dozer_modulation"
     id: auger_modulation_status
     state_class: measurement
-    unit_of_measurement: "%"
+    unit_of_measurement: "s/10s"
     accuracy_decimals: 0
     update_interval: 1s
 
@@ -1313,6 +1310,7 @@ number:
     optimistic: true
     restore_value: true
     initial_value: 100
+    unit_of_measurement: "%"
     mode: box
     on_value:
       then:
@@ -1354,6 +1352,7 @@ number:
   - platform: template
     name: "auger_percent_on_ignition"
     id: auger_percent_on_ignition
+    unit_of_measurement: "s/10s"
     min_value: 0
     max_value: 50
     mode: box
@@ -1364,6 +1363,7 @@ number:
   - platform: template
     name: "auger_percent_on_stabilization"
     id: auger_percent_on_stabilization
+    unit_of_measurement: "s/10s"
     min_value: 15
     max_value: 50
     mode: box
@@ -1374,6 +1374,7 @@ number:
   - platform: template
     name: "auger_percent_on_normal_run"
     id: auger_percent_on_normal_run
+    unit_of_measurement: "s/10s"
     min_value: 15
     max_value: 50
     mode: box
