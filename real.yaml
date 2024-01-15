@@ -606,7 +606,12 @@ switch:
         - output.turn_off: TM1638Led5
 
 ########### end hardware switches  ###########
-
+  - platform: template
+    name: "Fara Pornire Noaptea"
+    id: dont_run_at_nightime
+    restore_mode: restore_default_on
+    optimistic: True   
+   
   - platform: template
     name: "fan_sigma_delta_enabler"
     id: fan_sigma_delta_enabler
@@ -940,6 +945,27 @@ binary_sensor:
       inverted: true
 
 ########### end hardware binary sensors ###########
+  
+  - platform: template
+    id: it_is_winter
+    name: winter
+    device_class: running
+    lambda: |-
+      return
+      id(sntp_time).now().month >10  ||
+      id(sntp_time).now().month <4
+      ;
+  
+  - platform: template
+    id: it_is_daylight
+    name: daylight
+    device_class: running
+    lambda: |-
+      return
+      id(sntp_time).now().hour > 10  &&
+      id(sntp_time).now().hour < 16
+      ;
+  
 
   - platform: template
     id: "running_for_some_time"
@@ -2369,6 +2395,15 @@ climate:
                           state: 'Ready for ignition'
 
             then:
+                - if:
+                    condition:
+                      - switch.is_on: dont_run_at_nightime
+                    then:
+                      wait_until: 
+                        condition:
+                          - or:
+                             - binary_sensor.is_on: it_is_daylight
+                             - switch.is_off: dont_run_at_nightime
                 - homeassistant.service:
                     service: notify.samuel
                     data:
@@ -2397,7 +2432,7 @@ climate:
                 data:
                   title: Se opreste!
                 data_template:
-                  message: "{{my_variable|round(1)}}°C, s-a oprit centrala!"
+                  message: "{{my_variable|round(1)}}°C, se opreste centrala!"
                 variables:
                      my_variable: |-
                         return id(ambient_temp).state;
