@@ -1,27 +1,27 @@
 #todo
 #dalasuri pe tur, retur si evacuare afara
-#prevenire compilare pentru substituiri invalide ex max_water_temp: "49" < min_ignition_water_temp: "50"
+#prevenire compilare pentru substituiri invalide ex max_water_temp: "49" < min_water_temp_for_ignition: "50"
 
 
 
 substitutions:
-  wait_for_preignition_time: "10min"  #time will pause dosing after mentioned time until temperature starts rising
+  wait_for_preignition_time: "10min"  #time, will pause dosing after mentioned time until temperature starts rising
   wait_for_ignition_time: "20min" #time, total time until ignition should occur
   ignition_delta_to_confirmed: "24" #float
   maximum_wait_for_stabilization_time: "10min" #time, failed ignition/stabilization at timeout
-  minimum_run_of_stabilization_time: "1min" #time, keep stabilization running once met exhaust condition
+  minimum_stabilization_time: "1min" #time, keep stabilization running once met exhaust condition
 
   auger_percent_on_ignition: "15"#float
   auger_percent_on_stabilization: "30" #float
   auger_percent_on_normal_run: "45"#float, 45 max, 15 min
-  auger_prefill_time: "15s" #time
+  auger_prefill_time: "15s" #time, seconds
   
   fan_percent_on_safety: "10"  # integer
   extinguished_temp: "50" #float
   minimum_extinguish_time: "5min" #time
   fully_ignited_temp: "100" #float 
   
-  min_ignition_water_temp: "60" #float, water_temp_heating_pump_to_be_fully_on -20?
+  min_water_temp_for_ignition: "60" #float, water_temp_heating_pump_to_be_fully_on -20?
   water_temp_heating_pump_to_be_fully_on: "75" #float, 70 This is the stove water target temp, main thermostat.
 
   max_water_pressure: "2250" #hPa, 1bar=1000hPa  2250
@@ -90,7 +90,7 @@ wifi:
     - ssid: !secret wifi_ssid_5
       password: !secret wifi_password_5
       manual_ip:
-        static_ip: 192.168.0.49
+        static_ip: 192.168.0.98
         gateway: 192.168.0.1
         subnet: 255.255.255.0
         dns1: 1.1.1.1
@@ -607,8 +607,8 @@ switch:
 
 ########### end hardware switches  ###########
   - platform: template
-    name: "Fara Pornire Noaptea"
-    id: dont_run_at_nightime
+    name: "Fara Pornire FRZ Noaptea"
+    id: dont_run_at_nightime_and_away
     restore_mode: restore_default_on
     optimistic: True   
    
@@ -1141,7 +1141,7 @@ button:
                        - delay: 30s #needs fan on for the next step to be valid
                        - if:
                           condition:
-                           - lambda: 'return id(stove_water_temp).state < ${min_ignition_water_temp};'
+                           - lambda: 'return id(stove_water_temp).state < ${min_water_temp_for_ignition};'
                            - lambda: 'return id(exhaust_temp).state < 80;'  #todo hot ignition/flame recovery ##low priority
                           then:
                             - text_sensor.template.publish:
@@ -1154,11 +1154,11 @@ button:
                             - switch.turn_on: heating_pump_switch
                             - text_sensor.template.publish:
                                     id: stove_status
-                                    state: "Wait for water temp to get lower than ${min_ignition_water_temp} and exhaust lower than 80"
+                                    state: "Wait for water temp to get lower than ${min_water_temp_for_ignition} and exhaust lower than 80"
                             - wait_until:
                                 condition:
                                   and:
-                                   - lambda: 'return id(stove_water_temp).state < ${min_ignition_water_temp};'
+                                   - lambda: 'return id(stove_water_temp).state < ${min_water_temp_for_ignition};'
                                    - lambda: 'return id(exhaust_temp).state < 80;'
                             - switch.turn_on: heating_pump_slow_pwm_enabler       
                             - script.execute: ignition_script
@@ -1201,9 +1201,9 @@ button:
               - text_sensor.template.publish:
                                        id: unexpected
                                        state: "Will extinguishing after ignition"
-              - rtttl.play: long:d=1,o=5,b=100:e6
-          else:
-              - rtttl.play: 'two_short:d=4,o=5,b=100:16e6,16e6'
+              - rtttl.play: 'loud_info:d=16,o=6,b=180:c7,e7,g7,c8'
+
+ 
           
           
 
@@ -1927,18 +1927,19 @@ script:
                   - switch.turn_off: auger_switch
                   - switch.turn_off: igniter_switch
                   - switch.turn_off: ignition_auger_enabler
-                  - switch.turn_off: prefilled
                   - if: 
                         condition:
                            - not:
                               - script.is_running: normal_extinguish_script
                         then:
                           - script.execute: stabilization_script
+                          - switch.turn_off: prefilled
                           - script.stop: ignition_script
                         else:
                           - text_sensor.template.publish:
                               id: stove_status
                               state: "Interrupted ignition"
+                          # leave prefilled as is (on) or - lambda: id(error_clear).publish_state(true); 
                           - text_sensor.template.publish:
                                        id: unexpected
                                        state: "Extinguishing script prevented switching to stabilization"
@@ -1948,6 +1949,7 @@ script:
                   - text_sensor.template.publish:
                             id: auger_status
                             state: "Stopped by failed ignition" 
+                  - lambda: id(error_clear).publish_state(false);
                   - switch.turn_off: auger_switch
                   - switch.turn_off: igniter_switch
                   - switch.turn_off: ignition_auger_enabler
@@ -1994,11 +1996,9 @@ script:
       - script.stop: monitoring_unexpected_script_for_normal_operation
       - switch.turn_on: exhaust_fan_switch
       - switch.turn_off: extinguish_completed
-      #- switch.turn_off: ignition_auger_enabler
       - switch.turn_off: stabilization_auger_enabler
       - switch.turn_off: normal_run_auger_enabler
       - switch.turn_off: auger_switch
-      #- switch.turn_off: heating_pump_slow_pwm_enabler
       - script.stop: air_pressure_binary_sensor_checkup
       - text_sensor.template.publish:
                             id: stove_status
@@ -2012,12 +2012,24 @@ script:
                             state: ""                    
       - if:
           condition:
-            - script.is_running: ignition_script 
+             - script.is_running: ignition_script 
+             - not:
+                  - or:
+                       - lambda: 'return id(exhaust_temp).state > ${exhaust_absolute_max_temp};'
+                       - lambda: 'return id(stove_water_temp).state > ${max_water_temp};'
           then:
             - text_sensor.template.publish:
                             id: exhaust_fan_status
                             state: "Waiting for ignition and then will extinguish" 
-            - script.wait: ignition_script #has its owm timeout
+            - text_sensor.template.publish:
+                            id: stove_status
+                            state: "Wait for ignition" 
+            - script.wait: ignition_script #has its own timeout
+            - text_sensor.template.publish:
+                            id: exhaust_fan_status
+                            state: "Extinguishing after ignition..." 
+            - delay: ${minimum_extinguish_time} # suplimentary wait
+            - delay: ${minimum_extinguish_time} # don't leave any smoke trace
             
       - if:
           condition:
@@ -2039,6 +2051,9 @@ script:
                        - lambda: 'return id(exhaust_temp).state > ${exhaust_absolute_max_temp};'
                        - lambda: 'return id(stove_water_temp).state > ${max_water_temp};'
                   then:
+                    - script.stop: ignition_script
+                    - switch.turn_off: ignition_auger_enabler
+                    - switch.turn_off: igniter_switch
                     - text_sensor.template.publish:
                             id: exhaust_fan_status
                             state: "Modulated for safety"
@@ -2054,16 +2069,17 @@ script:
                     - rtttl.play: long:d=1,o=5,b=100:e6
                     - wait_until:
                           condition:
-                            not:
-                              - lambda: 'return id(exhaust_temp).state > (${exhaust_absolute_max_temp} - 50);'
-                              - lambda: 'return id(stove_water_temp).state > (${max_water_temp} - 10);'
+                              - lambda: 'return id(exhaust_temp).state < (${exhaust_absolute_max_temp} - 50);'
+                              - lambda: 'return id(stove_water_temp).state < (${max_water_temp} - 10);'
                           #no timeout
                     - switch.turn_off: fan_sigma_delta_enabler
                     - switch.turn_on: exhaust_fan_switch
+                    
 
               #faster extinguish here, less amount of heat wasted
               - if:
                   condition:
+                    - binary_sensor.is_on: error_clear
                     - binary_sensor.is_on: running_for_some_time
                     - lambda: 'return id(exhaust_temp).state > (${fully_ignited_temp}+80);' #+80
                     - lambda: 'return id(stove_water_temp).state > ${extinguished_temp};'
@@ -2083,19 +2099,20 @@ script:
                      - wait_until:
                          condition:
                             - lambda: 'return id(exhaust_temp).state < ${extinguished_temp};' 
-                     - text_sensor.template.publish:
+              - text_sensor.template.publish:
                                    id: exhaust_fan_status
-                                   state: "Extinguishing, stopping by timeout, was hot when started..."
+                                   state: "Will finish extinguishing in ${minimum_extinguish_time}...."
               - delay: ${minimum_extinguish_time}
-              - if:
-                  condition:
-                   - binary_sensor.is_off: error_clear
-                  then:
-                    - switch.turn_off: prefilled
               - switch.turn_off: exhaust_fan_switch
               - text_sensor.template.publish:
                             id: exhaust_fan_status
                             state: "Extinguished, was hot when started."
+              - if:
+                  condition:
+                   - binary_sensor.is_on: error_clear
+                  then:
+                    - switch.turn_off: prefilled #don't move it below
+
       - switch.turn_on: extinguish_completed
       - if:
           condition:
@@ -2144,7 +2161,7 @@ script:
       - wait_until:
                   condition:
                     for:
-                      time: ${minimum_run_of_stabilization_time}
+                      time: ${minimum_stabilization_time}
                       condition:
                         - lambda: 'return id(exhaust_temp).state > ${fully_ignited_temp};'
                   timeout: ${maximum_wait_for_stabilization_time}
@@ -2172,6 +2189,7 @@ script:
             - switch.turn_off: igniter_switch
             - script.execute: normal_extinguish_script
             - delay: 1s #insert text while executing above script
+            - lambda: id(error_clear).publish_state(false);
             - text_sensor.template.publish:
                       id: stove_status
                       state: "Failed stabilization, extinguishing..."  
@@ -2180,6 +2198,7 @@ script:
             - text_sensor.template.publish:
                       id: stove_status
                       state: "Failed Stabilization"
+                    
             - script.stop: stabilization_script
 
   - id: normal_run_script
@@ -2218,7 +2237,7 @@ script:
     then:
       - switch.turn_on: heating_pump_switch
       - switch.turn_on: exhaust_fan_switch ##just in case it failed turning on at that very early boot
-      - output.turn_on: TM1638Led8
+      - output.turn_on: TM1638Led8 #fan led
       - text_sensor.template.publish:
                    id: stove_status
                    state: "Booting checkup..."
@@ -2243,11 +2262,10 @@ script:
             - text_sensor.template.publish:
                             id: stove_status
                             state: "Error, check exhaust temp sensor"
-            #- lambda: id(error_clear).publish_state(false); let it be unknown here
-            - switch.turn_on: heating_pump_switch
+            - lambda: id(error_clear).publish_state(false);
             - text_sensor.template.publish:
                        id: heating_pump_status
-                       state: "NAN Exaust temp, turned on..."
+                       state: "NAN Exaust temp, leaved on..."
             - script.stop: booting_script
       
       - if: 
@@ -2259,10 +2277,10 @@ script:
             - script.execute: normal_extinguish_script
             - text_sensor.template.publish:
                       id: stove_status
-                      state: "Waiting water temp to get lower than ${min_ignition_water_temp} (at boot)" 
+                      state: "Waiting water temp to get lower than ${min_water_temp_for_ignition} (at boot)" 
             - wait_until:
                   condition:
-                      - lambda: 'return id(stove_water_temp).state < ${min_ignition_water_temp};'
+                      - lambda: 'return id(stove_water_temp).state < ${min_water_temp_for_ignition};'
 
             - switch.turn_off: heating_pump_switch
             - text_sensor.template.publish:
@@ -2332,6 +2350,7 @@ script:
            condition:
              or:
                - lambda: 'return id(exhaust_temp).state > ${exhaust_absolute_max_temp};'
+               # max water temp monitored by on_value_range
                - and:
                    - lambda: 'return id(exhaust_temp).state < ${fully_ignited_temp}*0.75;'
                    - text_sensor.state:
@@ -2363,12 +2382,10 @@ script:
            - text_sensor.template.publish:
                            id: unexpected
                            state: "Exhaust temp < ${fully_ignited_temp}*0.75" 
-#
-                                     
      - script.stop: normal_run_script
      - script.stop: ignition_script
      - script.stop: stabilization_script
-     - script.execute: normal_extinguish_script     #will restart  
+     - script.execute: normal_extinguish_script  
 
 climate:
   - platform: bang_bang
@@ -2397,13 +2414,15 @@ climate:
             then:
                 - if:
                     condition:
-                      - switch.is_on: dont_run_at_nightime
+                      - switch.is_on: dont_run_at_nightime_and_away
+                      - lambda: 'return id(climate_controller).preset == CLIMATE_PRESET_AWAY;'
                     then:
-                      wait_until: 
-                        condition:
-                          - or:
-                             - binary_sensor.is_on: it_is_daylight
-                             - switch.is_off: dont_run_at_nightime
+                      - rtttl.play: 'infinitebeep:d=4,o=5,b=120:g5,e5,c5,g4,e4,c4,g3,e3,c3'
+                      - wait_until: 
+                         condition:
+                           - or:
+                              - binary_sensor.is_on: it_is_daylight
+                              - switch.is_off: dont_run_at_nightime_and_away
                 - homeassistant.service:
                     service: notify.samuel
                     data:
@@ -2418,7 +2437,7 @@ climate:
               - climate.control:
                     id: climate_controller
                     mode: "OFF"
-              - rtttl.play: 'scale_inverted:d=32,o=5,b=100:b,a#,g#,f#,e,d#,c,c#'
+              - rtttl.play: 'scale_down:d=32,o=5,b=100:b,a#,a,g#,g,f#,e,d,c'
 
     idle_action:
       - if:
@@ -2427,6 +2446,7 @@ climate:
               - switch.is_off: extinguish_completed
               - binary_sensor.is_off: is_running_normal_extinguish_script
           then:
+            - rtttl.play: 'goal_achieved:d=16,o=5,b=200:e6,e6,e6,a6,e6,0,p,g6,g6,g6,f6,e6,d6,0,p,a6,a6,a6,b6,c7'
             - homeassistant.service:
                 service: notify.samuel
                 data:
