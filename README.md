@@ -13,7 +13,7 @@ Highlighted features:
 Disclaimer: 
 IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RESPONSIBLE FOR IT IN ANY WAY.
 
-Warning: disconnecting the display will result in a bootloop. Auger should stay off all the time when this happens, else use other pin for auger or high/low input relay.
+Warning: disconnecting the display will result in a bootloop. Auger should stay off all the time when this happens, else use other pin for auger or change to high/low input relay.
 
 Hardware used:  
  - Sensors:
