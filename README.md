@@ -13,6 +13,8 @@ Highlighted features:
 Disclaimer: 
 IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RESPONSIBLE FOR IT IN ANY WAY.
 
+Warning: disconnecting the display will result in a bootloop. Auger should stay off all the time when this happens. else use other pin or high/low input relay.
+
 Hardware used:  
  - Sensors:
     - Stoves own 10k themistors, exhaust k type thermocuple, and negative air pressure binary sensor (presostat)
