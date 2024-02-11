@@ -8,7 +8,7 @@ Highlighted features:
 - Pellet consumption and power output estimation (in watts) based on pellet usage.
 - Fan throttle via sigma delta modulation when needed.
 - Pump freeze protection
-- Can be tested with cold hardware or <s>simply no hardware, just a flashed ESP.</s>. Future simulation versions will need a TM1638 as it became deeply integrated into the project. 
+- Can be tested with cold hardware <s> or simply no hardware, just a flashed ESP</s>. Future simulation versions will need a TM1638 as it became deeply integrated into the project. 
 
 Disclaimer: 
 IT HAS THE POTENTIAL TO BURN DOWN YOUR HOUSE OR EVEN WORSE AND I WILL NOT BE RESPONSIBLE FOR IT IN ANY WAY.
