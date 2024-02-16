@@ -108,15 +108,15 @@ rtttl:
   id: my_rtttl
 
 
-i2c:
-  sda: 8
-  scl: 9
-  scan: True
-  frequency: 50khz #25khz #200 unstable ads1115
+#i2c:
+#  sda: 8
+#  scl: 9
+#  scan: True
+#  frequency: 50khz #25khz #200 unstable ads1115
   
-ads1115:
-  - address: 0x48
-    continuous_mode: false
+#ads1115:
+#  - address: 0x48
+#    continuous_mode: false
     
 time:
   - platform: sntp
@@ -214,53 +214,53 @@ sensor:
   #      - timeout: 10s
 
 
-  - platform: ads1115
-  # conector 1 stanga sus sub ads
-  #todo checked for unplugged, use change sensor filter
-    multiplexer: 'A0_GND'
-    gain: 4.096
-    accuracy_decimals: 3
-    name: "voltaj senzor presiune"
-    id: a0_gnd
-    update_interval: 1s
-    filters:
-      #- throttle_average: 5s
-    
-
-  - platform: ads1115
-   # conector ntc port 1 dreapta sus sub expander
-    multiplexer: 'A1_GND'
-    gain: 4.096
-    accuracy_decimals: 4
-    name: "ntc_temp_1_source_voltage"
-    id: a1_gnd_ntc_temp_1
-    update_interval: 0.01s # 0.01
-    filters:
-      - sliding_window_moving_average:
-         window_size: 500
-         send_every: 100
-    #  - median:
-      #      window_size: 250 #5000
-         #   send_every: 100  #5000
-
-  - platform: ads1115
-   #conector ntc port 2 dreapta sus sub expander
-    multiplexer: 'A2_GND'
-    gain: 4.096
-    accuracy_decimals: 2
-    name: "ntc_temp_2_source_voltage"
-    id: a2_gnd_ntc_temp_2
-    update_interval: 1s
-   # filters: 
-   #   - throttle_average: 5s
-  - platform: ads1115
-    #conector ntc port 2 dreapta sus sub expander
-    multiplexer: 'A3_GND'
-    gain: 4.096
-    accuracy_decimals: 2
-    name: "A3_GND" 
-    update_interval: 5s
-
+#  - platform: ads1115
+#  # conector 1 stanga sus sub ads
+#  #todo checked for unplugged, use change sensor filter
+#    multiplexer: 'A0_GND'
+#    gain: 4.096
+#    accuracy_decimals: 3
+#    name: "voltaj senzor presiune"
+#    id: a0_gnd
+#    update_interval: 1s
+#    filters:
+#      #- throttle_average: 5s
+#    
+#
+#  - platform: ads1115
+#   # conector ntc port 1 dreapta sus sub expander
+#    multiplexer: 'A1_GND'
+#    gain: 4.096
+#    accuracy_decimals: 4
+#    name: "ntc_temp_1_source_voltage"
+#    id: a1_gnd_ntc_temp_1
+#    update_interval: 0.01s # 0.01
+#    filters:
+#      - sliding_window_moving_average:
+#         window_size: 500
+#         send_every: 100
+#    #  - median:
+#      #      window_size: 250 #5000
+#         #   send_every: 100  #5000
+#
+#  - platform: ads1115
+#   #conector ntc port 2 dreapta sus sub expander
+#    multiplexer: 'A2_GND'
+#    gain: 4.096
+#    accuracy_decimals: 2
+#    name: "ntc_temp_2_source_voltage"
+#    id: a2_gnd_ntc_temp_2
+#    update_interval: 1s
+#   # filters: 
+#   #   - throttle_average: 5s
+#  - platform: ads1115
+#    #conector ntc port 2 dreapta sus sub expander
+#    multiplexer: 'A3_GND'
+#    gain: 4.096
+#    accuracy_decimals: 2
+#    name: "A3_GND" 
+#    update_interval: 5s
+#
 
 ########### end hardware sensors ###########
   - platform: template
